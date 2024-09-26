@@ -34,7 +34,7 @@ What is Kickstart?
 
     If you don't know anything about Lua, I recommend taking some time to read through
     a guide. One possible example which will only take 10-15 minutes:
-      - https://learnxinyminutes.com/docs/lua/
+      - https://learnxinyminutes.com//lua/
 
     After understanding a bit more about Lua, you can use `:help lua-guide` as a
     reference for how Neovim integrates Lua.
@@ -91,7 +91,14 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
+
+-- disable netrw at the very start of your init.lua
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
+
+-- optionally enable 24-bit colour
+vim.opt.termguicolors = true
 
 -- [[ Setting options ]]
 -- See `:help vim.opt`
@@ -101,8 +108,7 @@ vim.g.have_nerd_font = false
 -- Make line numbers default
 vim.opt.number = true
 -- You can also add relative line numbers, to help with jumping.
---  Experiment for yourself to see if you like it!
--- vim.opt.relativenumber = true
+vim.opt.relativenumber = true
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = 'a'
@@ -158,7 +164,6 @@ vim.opt.cursorline = true
 vim.opt.scrolloff = 10
 
 -- [[ Basic Keymaps ]]
---  See `:help vim.keymap.set()`
 
 -- Clear highlights on search when pressing <Esc> in normal mode
 --  See `:help hlsearch`
@@ -176,10 +181,10 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
 -- TIP: Disable arrow keys in normal mode
--- vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
--- vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
--- vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
--- vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
+vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
+vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
+vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
+vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
 
 -- Keybinds to make split navigation easier.
 --  Use CTRL+<hjkl> to switch between windows
@@ -189,6 +194,25 @@ vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left wind
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+
+-- Overriden split window resize
+vim.keymap.set('n', '__', '5<C-w><', { desc = 'Decrease width 5 times' })
+vim.keymap.set('n', '--', '5<C-w>>', { desc = 'Increase width 5 times' })
+
+-- Tabs
+vim.keymap.set('n', '<leader>tn', ':tabnew<CR>', { desc = 'Open new tab' })
+vim.keymap.set('n', '<leader>tc', ':tabclose<CR>', { desc = 'Close current tab' })
+
+vim.keymap.set('n', '<space>m', ':Mason<CR>')
+
+-- Nvim tree basic command keymaps
+vim.keymap.set('n', '<leader>ec', function()
+  vim.cmd [[NvimTreeToggle]]
+end, { desc = 'Open Nvim Tree or close it if already open' })
+
+vim.keymap.set('n', '<leader>ee', function()
+  vim.cmd [[NvimTreeFocus]]
+end, { desc = 'Open Nvim Tree if closed and focus on it' })
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
@@ -202,6 +226,12 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   callback = function()
     vim.highlight.on_yank()
   end,
+})
+
+-- Automatically compile .tex files on save
+vim.api.nvim_create_autocmd('BufWritePost', {
+  pattern = '*.tex',
+  command = 'VimtexCompile',
 })
 
 -- [[ Install `lazy.nvim` plugin manager ]]
@@ -439,6 +469,193 @@ require('lazy').setup({
     end,
   },
 
+  {
+    'stevearc/conform.nvim',
+    config = function()
+      require('conform').setup {
+        formatters_by_ft = {
+          lua = { 'stylua' },
+          c = { 'clang-format' },
+          python = { 'isort', 'black' },
+          latex = { 'latexindent' },
+        },
+        format_on_save = {
+          -- These options will be passed to conform.format()
+          timeout_ms = 500,
+          lsp_format = 'fallback',
+        },
+      }
+    end,
+  },
+
+  {
+    'Civitasv/cmake-tools.nvim',
+    config = function()
+      local osys = require 'cmake-tools.osys'
+      require('cmake-tools').setup {
+        cmake_command = 'cmake', -- this is used to specify cmake command path
+        ctest_command = 'ctest', -- this is used to specify ctest command path
+        cmake_use_preset = true,
+        cmake_regenerate_on_save = true, -- auto generate when save CMakeLists.txt
+        cmake_generate_options = { '-DCMAKE_EXPORT_COMPILE_COMMANDS=1' }, -- this will be passed when invoke `CMakeGenerate`
+        cmake_build_options = {}, -- this will be passed when invoke `CMakeBuild`
+        -- support macro expansion:
+        --       ${kit}
+        --       ${kitGenerator}
+        --       ${variant:xx}
+        cmake_build_directory = function()
+          return 'out/${variant:buildType}'
+        end, -- this is used to specify generate directory for cmake, allows macro expansion, can be a string or a function returning the string, relative to cwd.
+        cmake_soft_link_compile_commands = true, -- this will automatically make a soft link from compile commands file to project root dir
+        cmake_compile_commands_from_lsp = false, -- this will automatically set compile commands file location using lsp, to use it, please set `cmake_soft_link_compile_commands` to false
+        cmake_kits_path = nil, -- this is used to specify global cmake kits path, see CMakeKits for detailed usage
+        cmake_variants_message = {
+          short = { show = true }, -- whether to show short message
+          long = { show = true, max_length = 40 }, -- whether to show long message
+        },
+        cmake_dap_configuration = { -- debug settings for cmake
+          name = 'cpp',
+          type = 'codelldb',
+          request = 'launch',
+          stopOnEntry = false,
+          runInTerminal = true,
+          console = 'integratedTerminal',
+        },
+        cmake_executor = { -- executor to use
+          name = 'quickfix', -- name of the executor
+          opts = {}, -- the options the executor will get, possible values depend on the executor type. See `default_opts` for possible values.
+          default_opts = { -- a list of default and possible values for executors
+            quickfix = {
+              show = 'always', -- "always", "only_on_error"
+              position = 'belowright', -- "vertical", "horizontal", "leftabove", "aboveleft", "rightbelow", "belowright", "topleft", "botright", use `:h vertical` for example to see help on them
+              size = 10,
+              encoding = 'utf-8', -- if encoding is not "utf-8", it will be converted to "utf-8" using `vim.fn.iconv`
+              auto_close_when_success = true, -- typically, you can use it with the "always" option; it will auto-close the quickfix buffer if the execution is successful.
+            },
+            toggleterm = {
+              direction = 'float', -- 'vertical' | 'horizontal' | 'tab' | 'float'
+              close_on_exit = false, -- whether close the terminal when exit
+              auto_scroll = true, -- whether auto scroll to the bottom
+              singleton = true, -- single instance, autocloses the opened one, if present
+            },
+            overseer = {
+              new_task_opts = {
+                strategy = {
+                  'toggleterm',
+                  direction = 'horizontal',
+                  autos_croll = true,
+                  quit_on_exit = 'success',
+                },
+              }, -- options to pass into the `overseer.new_task` command
+              on_new_task = function(task)
+                require('overseer').open { enter = false, direction = 'right' }
+              end, -- a function that gets overseer.Task when it is created, before calling `task:start`
+            },
+            terminal = {
+              name = 'Main Terminal',
+              prefix_name = '[CMakeTools]: ', -- This must be included and must be unique, otherwise the terminals will not work. Do not use a simple spacebar " ", or any generic name
+              split_direction = 'horizontal', -- "horizontal", "vertical"
+              split_size = 11,
+
+              -- Window handling
+              single_terminal_per_instance = true, -- Single viewport, multiple windows
+              single_terminal_per_tab = true, -- Single viewport per tab
+              keep_terminal_static_location = true, -- Static location of the viewport if avialable
+
+              -- Running Tasks
+              start_insert = false, -- If you want to enter terminal with :startinsert upon using :CMakeRun
+              focus = false, -- Focus on terminal when cmake task is launched.
+              do_not_add_newline = false, -- Do not hit enter on the command inserted when using :CMakeRun, allowing a chance to review or modify the command before hitting enter.
+            }, -- terminal executor uses the values in cmake_terminal
+          },
+        },
+        cmake_runner = { -- runner to use
+          name = 'terminal', -- name of the runner
+          opts = {}, -- the options the runner will get, possible values depend on the runner type. See `default_opts` for possible values.
+          default_opts = { -- a list of default and possible values for runners
+            quickfix = {
+              show = 'always', -- "always", "only_on_error"
+              position = 'belowright', -- "bottom", "top"
+              size = 10,
+              encoding = 'utf-8',
+              auto_close_when_success = true, -- typically, you can use it with the "always" option; it will auto-close the quickfix buffer if the execution is successful.
+            },
+            toggleterm = {
+              direction = 'float', -- 'vertical' | 'horizontal' | 'tab' | 'float'
+              close_on_exit = false, -- whether close the terminal when exit
+              auto_scroll = true, -- whether auto scroll to the bottom
+              singleton = true, -- single instance, autocloses the opened one, if present
+            },
+            overseer = {
+              new_task_opts = {
+                strategy = {
+                  'toggleterm',
+                  direction = 'horizontal',
+                  autos_croll = true,
+                  quit_on_exit = 'success',
+                },
+              }, -- options to pass into the `overseer.new_task` command
+              on_new_task = function(task) end, -- a function that gets overseer.Task when it is created, before calling `task:start`
+            },
+            terminal = {
+              name = 'Main Terminal',
+              prefix_name = '[CMakeTools]: ', -- This must be included and must be unique, otherwise the terminals will not work. Do not use a simple spacebar " ", or any generic name
+              split_direction = 'horizontal', -- "horizontal", "vertical"
+              split_size = 11,
+
+              -- Window handling
+              single_terminal_per_instance = true, -- Single viewport, multiple windows
+              single_terminal_per_tab = true, -- Single viewport per tab
+              keep_terminal_static_location = true, -- Static location of the viewport if avialable
+
+              -- Running Tasks
+              start_insert = false, -- If you want to enter terminal with :startinsert upon using :CMakeRun
+              focus = false, -- Focus on terminal when cmake task is launched.
+              do_not_add_newline = false, -- Do not hit enter on the command inserted when using :CMakeRun, allowing a chance to review or modify the command before hitting enter.
+            },
+          },
+        },
+        cmake_notifications = {
+          runner = { enabled = true },
+          executor = { enabled = true },
+          spinner = { '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏' }, -- icons used for progress display
+          refresh_rate_ms = 100, -- how often to iterate icons
+        },
+        cmake_virtual_text_support = true, -- Show the target related to current file using virtual text (at right corner)
+      }
+    end,
+  },
+
+  -- Linters
+  {
+    'mfussenegger/nvim-lint',
+    event = {
+      'BufReadPre',
+      'BufNewFile',
+    },
+    config = function()
+      local lint = require 'lint'
+
+      lint.linters_by_ft = {
+        c = { 'clangtidy' },
+        python = { 'flake8' },
+        terraform = { 'tflint' },
+      }
+
+      local lint_augroup = vim.api.nvim_create_augroup('lint', { clear = true })
+
+      vim.api.nvim_create_autocmd({ 'BufEnter', 'BufWritePost', 'InsertLeave' }, {
+        group = lint_augroup,
+        callback = function()
+          lint.try_lint()
+        end,
+      })
+
+      vim.keymap.set('n', '<leader>ll', function()
+        lint.try_lint()
+      end, { desc = 'Trigger linting for current file' })
+    end,
+  },
   -- LSP Plugins
   {
     -- `lazydev` configures Lua LSP for your Neovim config, runtime and plugins
@@ -606,19 +823,8 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- clangd = {},
-        -- gopls = {},
-        -- pyright = {},
-        -- rust_analyzer = {},
-        -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
-        --
-        -- Some languages (like typescript) have entire language plugins that can be useful:
-        --    https://github.com/pmizio/typescript-tools.nvim
-        --
-        -- But for many setups, the LSP (`tsserver`) will work just fine
-        -- tsserver = {},
-        --
-
+        clangd = {},
+        pyright = {},
         lua_ls = {
           -- cmd = {...},
           -- filetypes = { ...},
@@ -665,6 +871,17 @@ require('lazy').setup({
       }
     end,
   },
+  {
+    'nvim-tree/nvim-tree.lua',
+    version = '*',
+    lazy = false,
+    dependencies = {
+      'nvim-tree/nvim-web-devicons',
+    },
+    config = function()
+      require('nvim-tree').setup {}
+    end,
+  },
 
   { -- Autoformat
     'stevearc/conform.nvim',
@@ -694,6 +911,7 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        c = { 'clang-format' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -703,6 +921,7 @@ require('lazy').setup({
     },
   },
 
+  { 'rafamadriz/friendly-snippets' },
   { -- Autocompletion
     'hrsh7th/nvim-cmp',
     event = 'InsertEnter',
@@ -723,12 +942,12 @@ require('lazy').setup({
           -- `friendly-snippets` contains a variety of premade snippets.
           --    See the README about individual language/framework/plugin snippets:
           --    https://github.com/rafamadriz/friendly-snippets
-          -- {
-          --   'rafamadriz/friendly-snippets',
-          --   config = function()
-          --     require('luasnip.loaders.from_vscode').lazy_load()
-          --   end,
-          -- },
+          {
+            'rafamadriz/friendly-snippets',
+            config = function()
+              require('luasnip.loaders.from_vscode').lazy_load()
+            end,
+          },
         },
       },
       'saadparwaiz1/cmp_luasnip',
@@ -837,6 +1056,27 @@ require('lazy').setup({
     end,
   },
 
+  {
+    'lervag/vimtex',
+    lazy = false, -- we don't want to lazy load VimTeX
+    -- tag = "v2.15", -- uncomment to pin to a specific release
+    init = function()
+      -- VimTeX configuration goes here, e.g.
+      vim.g.vimtex_view_general_viewer = 'okular'
+      vim.g.vimtex_quickfix_open_on_warning = 0
+      -- Enable continuous compilation with latexmk
+      vim.g.vimtex_compiler_latexmk = {
+        build_dir = '',
+        continuous = 1, -- Enable continuous compilation
+        options = {
+          '-pdf', -- Generate PDF output
+          '-interaction=nonstopmode', -- Ignore errors during compilation
+          '-synctex=1', -- Enable synchronization between source and PDF
+        },
+      }
+    end,
+  },
+
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
 
@@ -883,7 +1123,7 @@ require('lazy').setup({
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
+      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'latex' },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {
@@ -891,7 +1131,7 @@ require('lazy').setup({
         -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
         --  If you are experiencing weird indenting issues, add the language to
         --  the list of additional_vim_regex_highlighting and disabled languages for indent.
-        additional_vim_regex_highlighting = { 'ruby' },
+        additional_vim_regex_highlighting = { 'ruby', 'latex' },
       },
       indent = { enable = true, disable = { 'ruby' } },
     },
@@ -924,7 +1164,7 @@ require('lazy').setup({
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
   --    For additional information, see `:help lazy.nvim-lazy.nvim-structuring-your-plugins`
-  -- { import = 'custom.plugins' },
+  { import = 'custom.plugins' },
 }, {
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
