@@ -357,6 +357,14 @@ require('lazy').setup({
     end,
   },
 
+  {
+    'startup-nvim/startup.nvim',
+    dependencies = { 'nvim-telescope/telescope.nvim', 'nvim-lua/plenary.nvim', 'nvim-telescope/telescope-file-browser.nvim' },
+    config = function()
+      require('startup').setup { theme = 'dashboard' }
+    end,
+  },
+
   -- NOTE: Plugins can specify dependencies.
   --
   -- The dependencies are proper plugin specifications as well - anything
