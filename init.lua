@@ -196,8 +196,11 @@ vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower win
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
 -- Overriden split window resize
-vim.keymap.set('n', '__', '5<C-w><', { desc = 'Decrease width 5 times' })
+vim.keymap.set('n', '-_', '5<C-w><', { desc = 'Decrease width 5 times' })
 vim.keymap.set('n', '--', '5<C-w>>', { desc = 'Increase width 5 times' })
+
+-- Buffers
+vim.api.nvim_set_keymap('n', '<C-s>', ':bdelete<CR>', { noremap = true, silent = true, desc = 'Close current buffer' })
 
 -- Tabs
 vim.keymap.set('n', '<leader>tn', ':tabnew<CR>', { desc = 'Open new tab' })
@@ -286,6 +289,44 @@ require('lazy').setup({
         changedelete = { text = '~' },
       },
     },
+  },
+
+  {
+    'nvim-neorg/neorg',
+    lazy = false, -- Disable lazy loading as some `lazy.nvim` distributions set `lazy = true` by default
+    version = '*', -- Pin Neorg to the latest stable release
+    config = function()
+      require('neorg').setup {
+        load = {
+          ['core.defaults'] = {},
+          ['core.completion'] = {
+            config = {
+              engine = 'nvim-cmp',
+            },
+          },
+          ['core.concealer'] = {},
+          ['core.integrations.nvim-cmp'] = {},
+          ['core.dirman'] = {
+            config = {
+              workspaces = {
+                personal = '/syncthing/notes/personal',
+                work = '/syncthing/notes/work',
+              },
+              default_workspace = 'personal',
+            },
+          },
+        },
+      }
+
+      vim.wo.foldlevel = 99
+      vim.wo.conceallevel = 2
+    end,
+  },
+  {
+    'rebelot/kanagawa.nvim', -- neorg needs a colorscheme with treesitter support
+    config = function()
+      vim.cmd.colorscheme 'kanagawa'
+    end,
   },
 
   -- NOTE: Plugins can also be configured to run Lua code when they are loaded.
@@ -429,7 +470,18 @@ require('lazy').setup({
         --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
         --   },
         -- },
-        -- pickers = {}
+        pickers = {
+          buffers = {
+            mappings = {
+              i = {
+                ['<C-s>'] = 'delete_buffer', -- In insert mode, press Ctrl+d to delete
+              },
+              n = {
+                ['<C-s>'] = 'delete_buffer', -- In normal mode, press Ctrl+d to delete
+              },
+            },
+          },
+        },
         extensions = {
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
@@ -1043,6 +1095,7 @@ require('lazy').setup({
           { name = 'nvim_lsp' },
           { name = 'luasnip' },
           { name = 'path' },
+          { name = 'neorg' },
         },
       }
     end,
@@ -1130,6 +1183,9 @@ require('lazy').setup({
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
+    config = function(_, opts)
+      require('nvim-treesitter.configs').setup(opts)
+    end,
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
