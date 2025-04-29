@@ -196,11 +196,14 @@ vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower win
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
 -- Overriden split window resize
-vim.keymap.set('n', '-_', '5<C-w><', { desc = 'Decrease width 5 times' })
-vim.keymap.set('n', '--', '5<C-w>>', { desc = 'Increase width 5 times' })
+vim.keymap.set('n', '--', '15<C-w><', { desc = 'Decrease window width 5 times' })
+vim.keymap.set('n', '++', '15<C-w>>', { desc = 'Increase window width 5 times' })
+vim.keymap.set('n', '==', '15<C-w>+', { desc = 'Decrease window height 5 times' })
+vim.keymap.set('n', '~~', '15<C-w>-', { desc = 'Increase window height 5 times' })
+
 
 -- Buffers
-vim.api.nvim_set_keymap('n', '<C-s>', ':bdelete<CR>', { noremap = true, silent = true, desc = 'Close current buffer' })
+vim.api.nvim_set_keymap('n', '<C-s>', ':bdelete!<CR>', { noremap = true, silent = true, desc = 'Close current buffer' })
 
 -- Tabs
 vim.keymap.set('n', '<leader>tn', ':tabnew<CR>', { desc = 'Open new tab' })
@@ -217,6 +220,15 @@ vim.keymap.set('n', '<leader>ee', function()
   vim.cmd [[NvimTreeFocus]]
 end, { desc = 'Open Nvim Tree if closed and focus on it' })
 
+
+vim.keymap.set('n', '<leader>st', function()
+  vim.cmd.vnew()
+  vim.cmd.term()
+  vim.cmd.wincmd("J")
+  vim.api.nvim_win_set_height(0, 15)
+end, { desc = "Terminal"})
+
+
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
@@ -228,6 +240,15 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
   callback = function()
     vim.highlight.on_yank()
+  end,
+})
+
+vim.api.nvim_create_autocmd('TermOpen', {
+  desc = 'Opens a new terminal as a horizontal split without line numbers.',
+  group = vim.api.nvim_create_augroup('custom-term-open', { clear = true }),
+  callback = function()
+    vim.opt.number = false
+    vim.opt.relativenumber = false
   end,
 })
 
