@@ -201,7 +201,6 @@ vim.keymap.set('n', '++', '15<C-w>>', { desc = 'Increase window width 5 times' }
 vim.keymap.set('n', '==', '15<C-w>+', { desc = 'Decrease window height 5 times' })
 vim.keymap.set('n', '~~', '15<C-w>-', { desc = 'Increase window height 5 times' })
 
-
 -- Buffers
 vim.api.nvim_set_keymap('n', '<C-s>', ':bdelete!<CR>', { noremap = true, silent = true, desc = 'Close current buffer' })
 
@@ -220,14 +219,12 @@ vim.keymap.set('n', '<leader>ee', function()
   vim.cmd [[NvimTreeFocus]]
 end, { desc = 'Open Nvim Tree if closed and focus on it' })
 
-
 vim.keymap.set('n', '<leader>st', function()
   vim.cmd.vnew()
   vim.cmd.term()
-  vim.cmd.wincmd("J")
+  vim.cmd.wincmd 'J'
   vim.api.nvim_win_set_height(0, 15)
-end, { desc = "Terminal"})
-
+end, { desc = 'Terminal' })
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
@@ -758,8 +755,8 @@ require('lazy').setup({
     'neovim/nvim-lspconfig',
     dependencies = {
       -- Automatically install LSPs and related tools to stdpath for Neovim
-      { 'williamboman/mason.nvim', config = true }, -- NOTE: Must be loaded before dependants
-      'williamboman/mason-lspconfig.nvim',
+      { 'williamboman/mason.nvim', version = '1.11.0', config = true }, -- NOTE: Must be loaded before dependants
+      { 'williamboman/mason-lspconfig.nvim', version = '1.32.0' },
       'WhoIsSethDaniel/mason-tool-installer.nvim',
 
       -- Useful status updates for LSP.
