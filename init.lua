@@ -219,12 +219,13 @@ vim.keymap.set('n', '<leader>ee', function()
   vim.cmd [[NvimTreeFocus]]
 end, { desc = 'Open Nvim Tree if closed and focus on it' })
 
-vim.keymap.set('n', '<leader>st', function()
+vim.keymap.set('n', '<C-t>', function()
   vim.cmd.vnew()
   vim.cmd.term()
   vim.cmd.wincmd 'J'
-  vim.api.nvim_win_set_height(0, 15)
+  vim.api.nvim_win_set_height(0, 30)
 end, { desc = 'Terminal' })
+
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
