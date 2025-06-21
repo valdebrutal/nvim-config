@@ -97,6 +97,9 @@ vim.g.have_nerd_font = true
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 
+vim.g.copilot_no_tab_map = true -- Disable copilot tab mapping, since it conflicts with the default <Tab> mapping in Neovim
+vim.api.nvim_set_keymap("i", "<C-j>", 'copilot#Accept("<CR>")', { expr = true, silent = true })
+
 -- optionally enable 24-bit colour
 vim.opt.termguicolors = true
 
@@ -115,6 +118,8 @@ vim.opt.mouse = 'a'
 
 -- Don't show the mode, since it's already in the status line
 vim.opt.showmode = false
+
+vim.opt.laststatus = 3
 
 -- Sync clipboard between OS and Neovim.
 --  Schedule the setting after `UiEnter` because it can increase startup-time.
@@ -186,6 +191,9 @@ vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
 vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
 vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
 
+vim.keymap.set('n', '<M-k>', '5k', { desc = 'Move up 5 times' })
+vim.keymap.set('n', '<M-j>', '5j', { desc = 'Move down 5 times' })
+
 -- Keybinds to make split navigation easier.
 --  Use CTRL+<hjkl> to switch between windows
 --
@@ -212,12 +220,12 @@ vim.keymap.set('n', '<space>m', ':Mason<CR>')
 
 -- Nvim tree basic command keymaps
 vim.keymap.set('n', '<leader>ec', function()
-  vim.cmd [[NvimTreeToggle]]
-end, { desc = 'Open Nvim Tree or close it if already open' })
+  vim.cmd [[Neotree close]]
+end, { desc = 'Close NeoTree if already open' })
 
 vim.keymap.set('n', '<leader>ee', function()
-  vim.cmd [[NvimTreeFocus]]
-end, { desc = 'Open Nvim Tree if closed and focus on it' })
+  vim.cmd [[Neotree]]
+end, { desc = 'Open NeoTree if closed and focus on it' })
 
 vim.keymap.set('n', '<C-t>', function()
   vim.cmd.vnew()
@@ -225,7 +233,6 @@ vim.keymap.set('n', '<C-t>', function()
   vim.cmd.wincmd 'J'
   vim.api.nvim_win_set_height(0, 30)
 end, { desc = 'Terminal' })
-
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
@@ -454,9 +461,6 @@ require('lazy').setup({
         end,
       },
       { 'nvim-telescope/telescope-ui-select.nvim' },
-
-      -- Useful for getting pretty icons, but requires a Nerd Font.
-      { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
     },
     config = function()
       -- Telescope is a fuzzy finder that comes with a lot of different things that
@@ -756,8 +760,8 @@ require('lazy').setup({
     'neovim/nvim-lspconfig',
     dependencies = {
       -- Automatically install LSPs and related tools to stdpath for Neovim
-      { 'williamboman/mason.nvim', version = '1.11.0', config = true }, -- NOTE: Must be loaded before dependants
-      { 'williamboman/mason-lspconfig.nvim', version = '1.32.0' },
+      { 'williamboman/mason.nvim', version = '2.0.0', config = true }, -- NOTE: Must be loaded before dependants
+      { 'williamboman/mason-lspconfig.nvim' },
       'WhoIsSethDaniel/mason-tool-installer.nvim',
 
       -- Useful status updates for LSP.
@@ -952,18 +956,6 @@ require('lazy').setup({
       }
     end,
   },
-  {
-    'nvim-tree/nvim-tree.lua',
-    version = '*',
-    lazy = false,
-    dependencies = {
-      'nvim-tree/nvim-web-devicons',
-    },
-    config = function()
-      require('nvim-tree').setup {}
-    end,
-  },
-
   { -- Autoformat
     'stevearc/conform.nvim',
     event = { 'BufWritePre' },
