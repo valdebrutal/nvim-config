@@ -227,13 +227,6 @@ vim.keymap.set('n', '<leader>ee', function()
   vim.cmd [[Neotree]]
 end, { desc = 'Open NeoTree if closed and focus on it' })
 
-vim.keymap.set('n', '<C-t>', function()
-  vim.cmd.vnew()
-  vim.cmd.term()
-  vim.cmd.wincmd 'J'
-  vim.api.nvim_win_set_height(0, 30)
-end, { desc = 'Terminal' })
-
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
@@ -245,15 +238,6 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
   callback = function()
     vim.highlight.on_yank()
-  end,
-})
-
-vim.api.nvim_create_autocmd('TermOpen', {
-  desc = 'Opens a new terminal as a horizontal split without line numbers.',
-  group = vim.api.nvim_create_augroup('custom-term-open', { clear = true }),
-  callback = function()
-    vim.opt.number = false
-    vim.opt.relativenumber = false
   end,
 })
 
