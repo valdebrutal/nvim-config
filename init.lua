@@ -98,7 +98,7 @@ vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 
 vim.g.copilot_no_tab_map = true -- Disable copilot tab mapping, since it conflicts with the default <Tab> mapping in Neovim
-vim.api.nvim_set_keymap("i", "<C-j>", 'copilot#Accept("<CR>")', { expr = true, silent = true })
+vim.api.nvim_set_keymap('i', '<C-j>', 'copilot#Accept("<CR>")', { expr = true, silent = true })
 
 -- optionally enable 24-bit colour
 vim.opt.termguicolors = true
@@ -744,7 +744,7 @@ require('lazy').setup({
     'neovim/nvim-lspconfig',
     dependencies = {
       -- Automatically install LSPs and related tools to stdpath for Neovim
-      { 'williamboman/mason.nvim', version = '2.0.0', config = true }, -- NOTE: Must be loaded before dependants
+      { 'williamboman/mason.nvim', version = '2.0.1', config = true }, -- NOTE: Must be loaded before dependants
       { 'williamboman/mason-lspconfig.nvim' },
       'WhoIsSethDaniel/mason-tool-installer.nvim',
 
@@ -894,6 +894,9 @@ require('lazy').setup({
       local servers = {
         clangd = {},
         pyright = {},
+        flake8 = {},
+        mesonlsp = {},
+        stylua = {},
         lua_ls = {
           -- cmd = {...},
           -- filetypes = { ...},
@@ -1246,6 +1249,7 @@ require('lazy').setup({
       lazy = '💤 ',
     },
   },
+  git = { url_format = 'git@github.com:%s.git' },
 })
 
 -- The line beneath this is called `modeline`. See `:help modeline`
