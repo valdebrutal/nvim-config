@@ -218,16 +218,27 @@ vim.keymap.set('n', '<leader>tc', ':tabclose<CR>', { desc = 'Close current tab' 
 
 vim.keymap.set('n', '<space>m', ':Mason<CR>')
 
--- Nvim tree basic command keymaps
-vim.keymap.set('n', '<leader>ec', function()
-  vim.cmd [[Neotree close]]
-end, { desc = 'Close NeoTree if already open' })
-
+-- Open/focus Oil in a left sidebar split with fixed width
 vim.keymap.set('n', '<leader>ee', function()
-  vim.cmd [[Neotree]]
-end, { desc = 'Open NeoTree if closed and focus on it' })
+  -- 1) If Oil is already open somewhere, jump to it.
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    local buf = vim.api.nvim_win_get_buf(win)
+    local name = vim.api.nvim_buf_get_name(buf)
+    if name:match '^oil://' or vim.bo[buf].filetype == 'oil' then
+      vim.api.nvim_set_current_win(win)
+      return
+    end
+  end
 
--- [[ Basic Autocommands ]]
+  -- 2) Otherwise, create a left split and size it like a sidebar.
+  local width = 32 -- tweak to taste
+  vim.cmd 'leftabove vsplit' -- left vertical split
+  vim.cmd('vertical resize ' .. width) -- set width
+  vim.wo.winfixwidth = true -- keep it from auto-resizing
+
+  -- 3) Open Oil in this split.
+  require('oil').open()
+end, { desc = 'Open/focus Oil in left sidebar split' }) -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
 -- Highlight when yanking (copying) text
@@ -535,25 +546,6 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sn', function()
         builtin.find_files { cwd = vim.fn.stdpath 'config' }
       end, { desc = '[S]earch [N]eovim files' })
-    end,
-  },
-
-  {
-    'stevearc/conform.nvim',
-    config = function()
-      require('conform').setup {
-        formatters_by_ft = {
-          lua = { 'stylua' },
-          c = { 'clang-format' },
-          python = { 'isort', 'black' },
-          latex = { 'latexindent' },
-        },
-        format_on_save = {
-          -- These options will be passed to conform.format()
-          timeout_ms = 500,
-          lsp_format = 'fallback',
-        },
-      }
     end,
   },
 
@@ -893,10 +885,18 @@ require('lazy').setup({
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
         clangd = {},
-        pyright = {},
-        flake8 = {},
+        pyright = {
+          settings = {
+            python = {
+              analysis = {
+                autoImportCompletions = true,
+                completeFunctionParens = true,
+                diagnosticMode = 'workspace', -- ensures full project scanning
+              },
+            },
+          },
+        },
         mesonlsp = {},
-        stylua = {},
         lua_ls = {
           -- cmd = {...},
           -- filetypes = { ...},
@@ -929,18 +929,20 @@ require('lazy').setup({
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
-      require('mason-lspconfig').setup {
-        handlers = {
-          function(server_name)
-            local server = servers[server_name] or {}
-            -- This handles overriding only values explicitly passed
-            -- by the server configuration above. Useful when disabling
-            -- certain features of an LSP (for example, turning off formatting for tsserver)
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
-          end,
-        },
-      }
+      -- Let mason-lspconfig manage installation only; don't let it auto-setup servers
+      require('mason-lspconfig').setup {}
+      -- New Neovim 0.11+ way: register config, then enable
+      -- Keep using cmp-nvim-lsp capabilities
+      for name, opts in pairs(servers) do
+        opts.capabilities = vim.tbl_deep_extend('force', {}, capabilities, opts.capabilities or {})
+
+        -- If you need to force root detection for a server, do it without lspconfig.util.
+        -- For Pyright you can usually rely on the default config provided by nvim-lspconfig.
+        -- (vim.lsp.config will merge your opts with the server's default config from nvim-lspconfig's `lsp/` dir.)
+
+        vim.lsp.config(name, opts) -- customize/extend the server config
+        vim.lsp.enable(name) -- enable it for its filetypes
+      end
     end,
   },
   { -- Autoformat
@@ -973,7 +975,7 @@ require('lazy').setup({
         lua = { 'stylua' },
         c = { 'clang-format' },
         -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
+        python = { 'isort', 'black' },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
