@@ -2,28 +2,64 @@ return {
   {
     'CopilotC-Nvim/CopilotChat.nvim',
     dependencies = {
-      { 'github/copilot.vim' }, -- or zbirenbaum/copilot.lua
       { 'nvim-lua/plenary.nvim', branch = 'master' }, -- for curl, log and async functions
     },
     build = 'make tiktoken', -- Only on MacOS or Linux
     opts = {
+      auto_insert_mode = true,
+      -- Keep context across chat sessions
+      sticky = {
+        '#buffers',
+        '#files',
+        '#diagnostics',
+        '#glob:**/*',
+        '#quickfix',
+        '#gitdiff',
+        '#gitstatus',
+      },
+      -- Custom prompts
       prompts = {
+        Explain = {
+          prompt = 'Explain how the selected code works in detail',
+          selection = true,
+        },
         Rename = {
           prompt = 'Rename the variable correctly in given selection based on context',
-          selection = function(source)
-            local select = require 'CopilotChat.select'
-            return select.visual(source)
-          end,
+          selection = true, -- Fixed the deprecated method
+        },
+        Refactor = {
+          prompt = 'Refactor the selected code to improve readability and maintainability',
+          selection = true,
+        },
+        FixIssue = {
+          prompt = 'Fix the following issue in my code:',
+          selection = true,
+        },
+        Optimize = {
+          prompt = 'Optimize the selected code for better performance',
+          selection = true,
+        },
+        GenerateTests = {
+          prompt = 'Generate comprehensive unit tests for the selected code',
+          selection = true,
+        },
+        Document = {
+          prompt = 'Add detailed documentation to the selected code',
+          selection = true,
         },
       },
     },
     keys = {
-      { '<leader>cc', '<cmd>CopilotChatToggle<cr>', mode = 'n', desc = 'Copilot Chat Toggle' },
-      { '<leader>cr', '<cmd>CopilotChatReset<cr>', mode = 'n', desc = 'Copilot Chat Reset' },
-      { '<leader>co', '<cmd>CopilotChatOptimize<cr>', mode = 'v', desc = 'Copilot Chat Optimize' },
-      { '<leader>cR', '<cmd>CopilotChatReview<cr>', mode = 'v', desc = 'Copilot Chat Review' },
-      { '<leader>ct', '<cmd>CopilotChatTests<cr>', mode = 'v', desc = 'Generate Tests' },
+      { '<leader>cc', '<cmd>CopilotChatToggle<CR>', mode = 'n', desc = 'Copilot Chat Toggle' },
+      { '<leader>ce', '<cmd>CopilotChatClose<CR>', mode = 'n', desc = 'Copilot Chat Close' },
+      { '<leader>cr', '<cmd>CopilotChatReset<CR>', mode = 'n', desc = 'Copilot Chat Reset' },
+      { '<leader>cm', '<cmd>CopilotChatModels<CR>', mode = 'n', desc = 'Copilot Chat Models' },
     },
-    -- See Commands section for default commands if you want to lazy load on them
+    -- Lazy load on specific commands
+    cmd = {
+      'CopilotChat',
+      'CopilotChatToggle',
+      'CopilotChatOpen',
+    },
   },
 }

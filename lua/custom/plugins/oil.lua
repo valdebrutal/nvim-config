@@ -6,7 +6,7 @@ return {
     -- Oil will take over directory buffers (e.g. `vim .` or `:e src/`)
     -- Set to false if you want some other plugin (e.g. netrw) to open when you edit directories.
     default_file_explorer = true,
-    -- Id is automatically added at the beginning, and name at the end
+    set_cwd = false,
     -- See :help oil-columns
     columns = {
       'icon',
@@ -63,9 +63,21 @@ return {
     -- See :help oil-actions for a list of all available actions
     keymaps = {
       ['g?'] = { 'actions.show_help', mode = 'n' },
-      ['<CR>'] = 'actions.select',
-      ['<C-s>'] = false,
+      ['<CR>'] = {
+        callback = function()
+          local oil = require 'oil'
+          local entry = oil.get_cursor_entry()
+          if entry and entry.type == 'directory' then
+            require('oil.actions').select.callback()
+          else
+            require('oil.actions').select_vsplit.callback()
+          end
+        end,
+        desc = 'Open file in vsplit, directory in oil',
+        mode = 'n',
+      },
       ['<C-h>'] = false,
+      ['<C-s>'] = false,
       ['<C-t>'] = false,
       ['<C-p>'] = 'actions.preview',
       ['<C-c>'] = false,
