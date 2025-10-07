@@ -704,7 +704,7 @@ require('lazy').setup {
       'neovim/nvim-lspconfig',
       dependencies = {
         -- Automatically install LSPs and related tools to stdpath for Neovim
-        { 'williamboman/mason.nvim', version = '2.0.1', config = true }, -- NOTE: Must be loaded before dependants
+        { 'williamboman/mason.nvim', config = true }, -- NOTE: Must be loaded before dependants
         { 'williamboman/mason-lspconfig.nvim' },
         'WhoIsSethDaniel/mason-tool-installer.nvim',
 
@@ -1075,7 +1075,6 @@ require('lazy').setup {
             { name = 'nvim_lsp' },
             { name = 'luasnip' },
             { name = 'path' },
-            { name = 'neorg' },
           },
         }
       end,
