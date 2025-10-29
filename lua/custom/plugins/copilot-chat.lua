@@ -2,6 +2,24 @@ return {
   {
     'CopilotC-Nvim/CopilotChat.nvim',
     dependencies = {
+      {
+        'zbirenbaum/copilot.lua',
+        lazy = false,
+        cmd = 'Copilot',
+        event = 'InsertEnter',
+        config = function()
+          vim.keymap.set('i', '<C-j>', require('copilot.suggestion').accept, { expr = true, replace_keycodes = false })
+          require('copilot').setup {
+            suggestion = {
+              enabled = true,
+              auto_trigger = true,
+            },
+            panel = {
+              enabled = true,
+            },
+          }
+        end,
+      },
       { 'nvim-lua/plenary.nvim', branch = 'master' }, -- for curl, log and async functions
     },
     build = 'make tiktoken', -- Only on MacOS or Linux
@@ -9,13 +27,12 @@ return {
       auto_insert_mode = true,
       -- Keep context across chat sessions
       sticky = {
-        '#buffers',
-        '#files',
-        '#diagnostics',
+        '#buffer:active',
         '#glob:**/*',
         '#quickfix',
         '#gitdiff',
         '#gitstatus',
+        '$claude-3.5-sonnet',
       },
       -- Custom prompts
       prompts = {
