@@ -104,8 +104,8 @@ if vim.fn.argv(0) ~= '' then
   end
 end
 
-vim.g.copilot_no_tab_map = true -- Disable copilot tab mapping, since it conflicts with the default <Tab> mapping in Neovim
-vim.api.nvim_set_keymap('i', '<C-j>', 'copilot#Accept("<CR>")', { expr = true, silent = true })
+-- vim.g.copilot_no_tab_map = true -- Disable copilot tab mapping, since it conflicts with the default <Tab> mapping in Neovim
+-- vim.api.nvim_set_keymap('i', '<C-j>', 'copilot#Accept("<CR>")', { expr = true, silent = true })
 
 -- optionally enable 24-bit colour
 vim.opt.termguicolors = true
