@@ -175,6 +175,8 @@ vim.opt.cursorline = true
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 10
 
+vim.opt.runtimepath = vim.opt.runtimepath + { vim.fn.stdpath 'data' .. '/site' }
+
 -- [[ Basic Keymaps ]]
 
 -- Clear highlights on search when pressing <Esc> in normal mode
@@ -408,7 +410,6 @@ require('lazy').setup {
     { -- Fuzzy Finder (files, lsp, etc)
       'nvim-telescope/telescope.nvim',
       event = 'VimEnter',
-      branch = '0.1.x',
       dependencies = {
         'nvim-lua/plenary.nvim',
         { -- If encountering errors, see telescope-fzf-native README for installation instructions
@@ -811,7 +812,7 @@ require('lazy').setup {
             --
             -- When you move your cursor, the highlights will be cleared (the second autocommand).
             local client = vim.lsp.get_client_by_id(event.data.client_id)
-            if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight) then
+            if client and client:supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight) then
               local highlight_augroup = vim.api.nvim_create_augroup('kickstart-lsp-highlight', { clear = false })
               vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
                 buffer = event.buf,
@@ -838,7 +839,7 @@ require('lazy').setup {
             -- code, if the language server you are using supports them
             --
             -- This may be unwanted, since they displace some of your code
-            if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint) then
+            if client and client:supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint) then
               map('<leader>th', function()
                 vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf })
               end, '[T]oggle Inlay [H]ints')
@@ -1099,27 +1100,6 @@ require('lazy').setup {
       end,
     },
 
-    {
-      'lervag/vimtex',
-      lazy = false, -- we don't want to lazy load VimTeX
-      -- tag = "v2.15", -- uncomment to pin to a specific release
-      init = function()
-        -- VimTeX configuration goes here, e.g.
-        vim.g.vimtex_view_general_viewer = 'okular'
-        vim.g.vimtex_quickfix_open_on_warning = 0
-        -- Enable continuous compilation with latexmk
-        vim.g.vimtex_compiler_latexmk = {
-          build_dir = '',
-          continuous = 1, -- Enable continuous compilation
-          options = {
-            '-pdf', -- Generate PDF output
-            '-interaction=nonstopmode', -- Ignore errors during compilation
-            '-synctex=1', -- Enable synchronization between source and PDF
-          },
-        }
-      end,
-    },
-
     -- Highlight todo, notes, etc in comments
     { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
 
@@ -1160,35 +1140,39 @@ require('lazy').setup {
         --  Check out: https://github.com/echasnovski/mini.nvim
       end,
     },
-    { -- Highlight, edit, and navigate code
+    {
       'nvim-treesitter/nvim-treesitter',
+      branch = 'main',
       build = ':TSUpdate',
-      config = function(_, opts)
-        require('nvim-treesitter.configs').setup(opts)
-      end,
-      main = 'nvim-treesitter.configs', -- Sets main module to use for opts
-      -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
-      opts = {
-        ensure_installed = { 'bash', 'c', 'python', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'latex' },
-        -- Autoinstall languages that are not installed
-        auto_install = true,
-        highlight = {
-          enable = true,
-          -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
-          --  If you are experiencing weird indenting issues, add the language to
-          --  the list of additional_vim_regex_highlighting and disabled languages for indent.
-          additional_vim_regex_highlighting = { 'ruby', 'latex', 'c', 'python' },
-        },
-        indent = { enable = true, disable = { 'ruby' } },
-      },
-      -- There are additional nvim-treesitter modules that you can use to interact
-      -- with nvim-treesitter. You should go explore a few and see what interests you:
-      --
-      --    - Incremental selection: Included, see `:help nvim-treesitter-incremental-selection-mod`
-      --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
-      --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
-    },
+      config = function()
+        local ts = require 'nvim-treesitter'
 
+        ts.install({
+          'bash',
+          'c',
+          'cpp',
+          'diff',
+          'html',
+          'json',
+          'lua',
+          'luadoc',
+          'python',
+          'query',
+          'vim',
+          'vimdoc',
+          'yaml',
+          'markdown',
+          'latex',
+        }, { summary = false })
+
+        vim.api.nvim_create_autocmd('FileType', {
+          pattern = { 'lua', 'python', 'c', 'cpp', 'vim', 'query', 'json', 'yaml', 'html', 'bash' },
+          callback = function(args)
+            vim.treesitter.start(args.buf)
+          end,
+        })
+      end,
+    },
     -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
     -- init.lua. If you want these files, they are in the repository, so you can just download them and
     -- place them in the correct locations.
